@@ -1,7 +1,7 @@
 import os
 import sys
 
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Signal, Slot
 from PySide6.QtWidgets import (
     QApplication, QFileDialog, QFormLayout, QHBoxLayout, QLabel, QLineEdit,
     QMainWindow, QPushButton, QStyleFactory, QWidget
@@ -33,17 +33,18 @@ class AppControlWidget(QWidget):
         layout.addRow(save_dir_button)
 
         service_restart_button = QPushButton("Restart GDS")
-        service_restart_button.setStyleSheet("background-color: blue; color: white; font-size: 14px;")
-        service_restart_button.setFixedHeight(50)
+        service_restart_button.setStyleSheet("background-color: blue; color: white; font-size: 14px; height: 50px;")
+        service_restart_button.clicked.connnect(self._service_restart_requested)
         layout.addRow(service_restart_button)
 
-        self.submit_button = QPushButton("Get Impedance")
-        self.submit_button.setStyleSheet("background-color: green; color: white; font-size: 14px;")
-        self.submit_button.setFixedHeight(75)
-        layout.addRow(self.submit_button)
+        impedance_button = QPushButton("Get Impedance")
+        impedance_button.setStyleSheet("background-color: green; color: white; font-size: 14px; height: 50px;")
+        impedance_button.clicked.connect(self._impedance_requested)
+        layout.addRow(impedance_button)
 
         self.setLayout(layout)
 
+    @Slot(str)
     def _subject_id_changed(self, subject_id):
         self.signal_subject_id_changed.emit(subject_id)
         # TODO: Add validation for BSI at beginnin of subject id
@@ -54,18 +55,28 @@ class AppControlWidget(QWidget):
 
         #TODO: Do session id and subject id need to be different?
     
+    @Slot(str)
     def _session_id_changed(self, session_id):
         self.signal_session_id_changed.emit(session_id)
 
+    @Slot(str)
     def _select_save_directory(self):
         directory = QFileDialog.getExistingDirectory(self,
                                                      "Select Save Directory",
                                                      os.path.expanduser("~"))
         if directory:
             self.signal_save_dir_selected.emit(directory)
+            
+    @Slot()
+    def _service_restart_requested(self):
+        self.signal_restart_requested.emit()
+
+    @Slot()
+    def _impedance_requested(self):
+        self.signal_impedance_requested.emit()
 
 
-class MainWindow(QMainWindow):
+class ImpedanceRecorder(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("g.tec Device Impedance Recorder")
@@ -82,7 +93,7 @@ class MainWindow(QMainWindow):
 def main():
     app = QApplication(sys.argv)
     app.setStyle(QStyleFactory.create("Fusion"))
-    window = MainWindow()
+    window = ImpedanceRecorder()
     window.show()
     
     sys.exit(app.exec())
