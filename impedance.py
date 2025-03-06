@@ -34,7 +34,7 @@ class AppControlWidget(QWidget):
 
         service_restart_button = QPushButton("Restart GDS")
         service_restart_button.setStyleSheet("background-color: blue; color: white; font-size: 14px; height: 50px;")
-        service_restart_button.clicked.connnect(self._service_restart_requested)
+        service_restart_button.clicked.connect(self._service_restart_requested)
         layout.addRow(service_restart_button)
 
         impedance_button = QPushButton("Get Impedance")
@@ -66,7 +66,7 @@ class AppControlWidget(QWidget):
                                                      os.path.expanduser("~"))
         if directory:
             self.signal_save_dir_selected.emit(directory)
-            
+
     @Slot()
     def _service_restart_requested(self):
         self.signal_restart_requested.emit()
@@ -83,12 +83,37 @@ class ImpedanceRecorder(QMainWindow):
         
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
-        
         self.layout = QHBoxLayout(self.central_widget)
         
-        self.control_widget = AppControlWidget()        
+
+        self.control_widget = AppControlWidget()       
         
         self.layout.addWidget(self.control_widget)
+
+        self._connect_signals()
+
+    def _connect_signals(self):
+        self.control_widget.signal_subject_id_changed.connect(self._set_subject_id)
+        self.control_widget.signal_session_id_changed.connect(self._set_session_id)
+        self.control_widget.signal_save_dir_selected.connect(self._set_save_dir)
+        self.control_widget.signal_restart_requested.connect(self._restart_service)
+        self.control_widget.signal_impedance_requested.connect(self._record_impedance)
+
+    def _set_subject_id(self, subject_id):
+        self.subject_id = subject_id
+
+    def _set_session_id(self, session_id):
+        self.subject_id = session_id
+
+    def _set_save_dir(self, save_dir):
+        self.save_dir = save_dir
+
+    def _restart_service(self):
+        pass
+
+    def _record_impedance(self):
+        pass
+
 
 def main():
     app = QApplication(sys.argv)
