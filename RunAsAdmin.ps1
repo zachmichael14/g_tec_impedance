@@ -5,11 +5,18 @@
 $isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 
 if (-not $isAdmin) {
-    $pythonScriptPath = "$PSScriptRoot\impedance.py"
+    Write-Host "Privileges escalated."
+
+    $pythonScriptPath = "$PSScriptRoot\main.py"
 
     Start-Process powershell -WindowStyle Hidden -Verb RunAs -ArgumentList "-ExecutionPolicy", "Bypass", "-Command", "conda activate impedance; python `"$pythonScriptPath`""
-    exit
+    
+    Write-Host "Starting, please wait..."
+    Start-Sleep(4)
+    
+    # Close the PowerShell window
+    Stop-Process -Id $PID
 }
 
 conda activate impedance
-python "$PSSCriptRoot\impedance.py" $args
+python "$PSSCriptRoot\main.py" $args
