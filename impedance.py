@@ -1,11 +1,16 @@
 import os
 import sys
+import time
 
 from PySide6.QtCore import Signal, Slot
 from PySide6.QtWidgets import (
     QApplication, QFileDialog, QFormLayout, QHBoxLayout, QLabel, QLineEdit,
     QMainWindow, QPushButton, QStyleFactory, QWidget
 )
+from win32serviceutil import (
+    QueryServiceStatus, StartService, StopService
+)
+
 
 class AppControlWidget(QWidget):
     signal_subject_id_changed = Signal(str)
@@ -15,7 +20,7 @@ class AppControlWidget(QWidget):
     signal_restart_requested = Signal()
     signal_impedance_requested = Signal()
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         layout = QFormLayout()
@@ -45,22 +50,22 @@ class AppControlWidget(QWidget):
         self.setLayout(layout)
 
     @Slot(str)
-    def _subject_id_changed(self, subject_id):
+    def _subject_id_changed(self, subject_id: str) -> None:
         self.signal_subject_id_changed.emit(subject_id)
         # TODO: Add validation for BSI at beginnin of subject id
         # The app prepends "BSI" to subject id, so if it is not included
         # add it. If it is included, do not prepend. 
 
-        #TODO: validat formate "BSIXXXSXXX" where x are numeric chars
+        #TODO: validat formate "BSIXXXSXXX" where X are numeric chars
 
         #TODO: Do session id and subject id need to be different?
     
     @Slot(str)
-    def _session_id_changed(self, session_id):
+    def _session_id_changed(self, session_id: str) -> None:
         self.signal_session_id_changed.emit(session_id)
 
     @Slot(str)
-    def _select_save_directory(self):
+    def _select_save_directory(self) -> None:
         directory = QFileDialog.getExistingDirectory(self,
                                                      "Select Save Directory",
                                                      os.path.expanduser("~"))
@@ -68,11 +73,11 @@ class AppControlWidget(QWidget):
             self.signal_save_dir_selected.emit(directory)
 
     @Slot()
-    def _service_restart_requested(self):
+    def _service_restart_requested(self) -> None:
         self.signal_restart_requested.emit()
 
     @Slot()
-    def _impedance_requested(self):
+    def _impedance_requested(self) -> None:
         self.signal_impedance_requested.emit()
 
 
@@ -84,7 +89,6 @@ class ImpedanceRecorder(QMainWindow):
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
         self.layout = QHBoxLayout(self.central_widget)
-        
 
         self.control_widget = AppControlWidget()       
         
@@ -92,28 +96,47 @@ class ImpedanceRecorder(QMainWindow):
 
         self._connect_signals()
 
-    def _connect_signals(self):
+    def _connect_signals(self) -> None:
         self.control_widget.signal_subject_id_changed.connect(self._set_subject_id)
         self.control_widget.signal_session_id_changed.connect(self._set_session_id)
         self.control_widget.signal_save_dir_selected.connect(self._set_save_dir)
         self.control_widget.signal_restart_requested.connect(self._restart_service)
         self.control_widget.signal_impedance_requested.connect(self._record_impedance)
 
-    def _set_subject_id(self, subject_id):
+    def _set_subject_id(self, subject_id: str) -> None:
         self.subject_id = subject_id
 
-    def _set_session_id(self, session_id):
+    def _set_session_id(self, session_id: str) -> None:
         self.subject_id = session_id
 
-    def _set_save_dir(self, save_dir):
+    def _set_save_dir(self, save_dir: str) -> None:
         self.save_dir = save_dir
 
-    def _restart_service(self):
-        pass
+    def _restart_service(self) -> None:
+        service_name = "GDS"
 
-    def _record_impedance(self):
-        pass
+        if self._is_service_running(service_name):
+            self._stop_service(service_name)
+            # Ideally, this is non-blocking
+            time.sleep(3)
+        
+        self._start_service(service_name)
 
+    def _is_service_running(self, service_name: str) -> bool:
+        """Return True if the service is running.
+        
+        QuerySErviceStatus returns nonzero value if service is running.
+        """
+        return QueryServiceStatus(service_name) != 0
+    
+    def _start_service(self, service_name: str) -> None:
+        StartService(service_name)
+    
+    def _stop_service(self, service_name: str) -> None:
+        StopService(service_name)
+
+    def _record_impedance(self) -> None:
+        pass
 
 def main():
     app = QApplication(sys.argv)
@@ -122,7 +145,6 @@ def main():
     window.show()
     
     sys.exit(app.exec())
-
 
 if __name__ == "__main__":
     main()
