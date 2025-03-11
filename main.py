@@ -1,7 +1,8 @@
 import sys
+
 from PySide6.QtWidgets import QApplication, QStyleFactory
 
-from control_panel import ControlPanel
+from src.control_panel import ControlPanel
 
 def main():
     app = QApplication()
