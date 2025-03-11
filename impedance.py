@@ -1,15 +1,12 @@
 import os
 import sys
-import time
 
 from PySide6.QtCore import Signal, Slot
 from PySide6.QtWidgets import (
     QApplication, QFileDialog, QFormLayout, QHBoxLayout, QLabel, QLineEdit,
     QMainWindow, QPushButton, QStyleFactory, QWidget
 )
-from win32serviceutil import (
-    QueryServiceStatus, StartService, StopService
-)
+from win32serviceutil import RestartService
 
 
 class AppControlWidget(QWidget):
@@ -113,33 +110,14 @@ class ImpedanceRecorder(QMainWindow):
         self.save_dir = save_dir
 
     def _restart_service(self) -> None:
-        service_name = "GDS"
-
-        if self._is_service_running(service_name):
-            self._stop_service(service_name)
-            # Ideally, this is non-blocking
-            time.sleep(3)
-        
-        self._start_service(service_name)
-
-    def _is_service_running(self, service_name: str) -> bool:
-        """Return True if the service is running.
-        
-        QuerySErviceStatus returns nonzero value if service is running.
-        """
-        return QueryServiceStatus(service_name) != 0
-    
-    def _start_service(self, service_name: str) -> None:
-        StartService(service_name)
-    
-    def _stop_service(self, service_name: str) -> None:
-        StopService(service_name)
+        """Stop, then restart, the g.tec Device Service."""
+        RestartService("GDS")
 
     def _record_impedance(self) -> None:
         pass
 
 def main():
-    app = QApplication(sys.argv)
+    app = QApplication()
     app.setStyle(QStyleFactory.create("Fusion"))
     window = ImpedanceRecorder()
     window.show()
