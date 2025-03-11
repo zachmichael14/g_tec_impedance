@@ -1,7 +1,7 @@
 import os
 import sys
 
-from PySide6.QtCore import Signal, Slot
+from PySide6.QtCore import QRegularExpression, QRegularExpressionMatch, Signal, Slot
 from PySide6.QtWidgets import (
     QApplication, QFileDialog, QFormLayout, QHBoxLayout, QLabel, QLineEdit,
     QMainWindow, QPushButton, QStyleFactory, QWidget
@@ -19,23 +19,30 @@ class AppControlWidget(QWidget):
 
     def __init__(self) -> None:
         super().__init__()
-
         layout = QFormLayout()
-       
-        subject_id_field = QLineEdit()
-        subject_id_field.textChanged.connect(self._subject_id_changed)
-        layout.addRow(QLabel("Subject ID:"), subject_id_field)
-       
-        session_id_field = QLineEdit()
-        session_id_field.textChanged.connect(self._session_id_changed)
-        layout.addRow(QLabel("Session Number:"), session_id_field)
-       
+        self.setLayout(layout)
+
+        subject_id = QLineEdit()
+        subject_id.setPlaceholderText("BSI0XXS0XX")
+        subject_id.textChanged.connect(self._subject_id_changed)
+        layout.addRow(QLabel("Subject ID:"), subject_id)
+
+        # Display a warning message when subject ID is not in proper format
+        self.validation_message = QLabel("")
+        layout.addRow(self.validation_message)
+
+        # Hide the message if there are no errors
+        self.validation_message.hide() 
+
         save_dir_button = QPushButton("Select Save Directory")
         save_dir_button.clicked.connect(self._select_save_directory)
         layout.addRow(save_dir_button)
 
+        # Lazy way to create buffer space to separate widgets
+        layout.addRow(QLabel(""))
+
         service_restart_button = QPushButton("Restart GDS")
-        service_restart_button.setStyleSheet("background-color: blue; color: white; font-size: 14px; height: 50px;")
+        service_restart_button.setStyleSheet("background-color: blue; color: white; font-size: 14px; height: 25px; margin-bottom: 5px;")
         service_restart_button.clicked.connect(self._service_restart_requested)
         layout.addRow(service_restart_button)
 
@@ -44,19 +51,41 @@ class AppControlWidget(QWidget):
         impedance_button.clicked.connect(self._impedance_requested)
         layout.addRow(impedance_button)
 
-        self.setLayout(layout)
-
     @Slot(str)
     def _subject_id_changed(self, subject_id: str) -> None:
-        self.signal_subject_id_changed.emit(subject_id)
-        # TODO: Add validation for BSI at beginnin of subject id
-        # The app prepends "BSI" to subject id, so if it is not included
-        # add it. If it is included, do not prepend. 
+        if not subject_id:
+            self._clear_validation_message()
 
-        #TODO: validat formate "BSIXXXSXXX" where X are numeric chars
+        elif self._validate_subject_id(subject_id):
+            self.signal_subject_id_changed.emit(subject_id)
 
-        #TODO: Do session id and subject id need to be different?
-    
+    def _validate_subject_id(self, subject_id: str) -> None:
+        """Display error message if subject ID doesn't match specific format."""
+        match = self._match_subject_id(subject_id)
+        
+        if match.hasMatch() or match.hasPartialMatch():
+            self._clear_validation_message()
+        else:
+            self._set_error_validation_message()
+
+    def _match_subject_id(self, subject_id) -> QRegularExpressionMatch:
+        """Match the subject ID to the specified format."""
+        regex = QRegularExpression("BSI[0-9]{3}S[0-9]{3}")
+        match = regex.match(subject_id,
+                            matchType=QRegularExpression.PartialPreferCompleteMatch)
+        return match
+            
+    def _clear_validation_message(self):
+        """Empty the validation message."""
+        self.validation_message.setText("")
+        self.validation_message.hide()
+
+    def _set_error_validation_message(self):
+        """Show error message to user (BSIXXXSXXX format for subject ID)"""
+        self.validation_message.setText("Invalid format - please use BSI0XXS0XX")
+        self.validation_message.setStyleSheet("color: red")
+        self.validation_message.show()
+
     @Slot(str)
     def _session_id_changed(self, session_id: str) -> None:
         self.signal_session_id_changed.emit(session_id)
@@ -111,7 +140,11 @@ class ImpedanceRecorder(QMainWindow):
 
     def _restart_service(self) -> None:
         """Stop, then restart, the g.tec Device Service."""
-        RestartService("GDS")
+        try:
+            RestartService("GDS")
+        except:
+            # pywintypes.error: (5, 'OpenSCManager', 'Access is denied.')
+            print("Unable to restart service.")
 
     def _record_impedance(self) -> None:
         pass
