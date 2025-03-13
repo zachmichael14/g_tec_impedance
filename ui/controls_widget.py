@@ -40,23 +40,30 @@ class ControlsWidget(QWidget):
         # Lazy way to create buffer space to separate widgets
         layout.addRow(QLabel(""))
 
-        service_restart_button = QPushButton("Restart GDS")
-        service_restart_button.setStyleSheet("background-color: blue; color: white; font-size: 14px; height: 25px; margin-bottom: 5px;")
-        service_restart_button.clicked.connect(self._service_restart_requested)
-        layout.addRow(service_restart_button)
+        self.service_restart_button = QPushButton("Restart GDS")
+        self.service_restart_button.setStyleSheet("background-color: blue; color: white; font-size: 14px; height: 25px; margin-bottom: 5px;")
+        self.service_restart_button.clicked.connect(self._service_restart_requested)
+        layout.addRow(self.service_restart_button)
 
-        impedance_button = QPushButton("Get Impedance")
-        impedance_button.setStyleSheet("background-color: green; color: white; font-size: 14px; height: 50px;")
-        impedance_button.clicked.connect(self._impedance_requested)
-        layout.addRow(impedance_button)
+        self.impedance_button = QPushButton("Get Impedance")
+        self.impedance_button.setStyleSheet("background-color: green; color: white; font-size: 14px; height: 50px;")
+        self.impedance_button.clicked.connect(self._impedance_requested)
+        layout.addRow(self.impedance_button)
 
     def get_subject_id(self) -> str:
         """Return current subject ID."""
+        
         return self.subject_id.text()
     
     def get_save_dir(self) -> str:
         """Return selected save directory."""
         return self.save_dir
+    
+    def toggle_restart_button_enabled(self, enabled: bool) -> None:
+        self.service_restart_button.setEnabled(enabled)
+
+    def toggle_impedance_button_enabled(self, enabled: bool) -> None:
+        self.impedance_button.setEnabled(enabled)
 
     @Slot(str)
     def _select_save_directory(self) -> None:
