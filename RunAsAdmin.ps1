@@ -9,7 +9,7 @@ if (-not $isAdmin) {
 
     $pythonScriptPath = "$PSScriptRoot\main.py"
 
-    Start-Process powershell -WindowStyle Hidden -Verb RunAs -ArgumentList "-ExecutionPolicy", "Bypass", "-Command", "conda activate impedance; python `"$pythonScriptPath`""
+    Start-Process powershell -Verb RunAs -WindowStyle Hidden -ArgumentList "-ExecutionPolicy", "Bypass", "-Command", "Set-Location '$PSScriptRoot'; conda activate impedance; python '$pythonScriptPath'"
     
     Write-Host "Starting, please wait..."
     Start-Sleep(4)
