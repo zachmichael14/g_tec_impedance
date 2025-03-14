@@ -10,7 +10,7 @@ class ServiceRestartThread(QThread):
     def run(self):
         try:
             RestartService("GDS")
-            self.restart_finished.emit("GDS service restarted successfully.")
+            self.restart_finished.emit("GDS service restarted successfully")
         except Exception as e:
             self.restart_finished.emit(f"Unable to restart service: {str(e)}")
 
@@ -23,11 +23,11 @@ class ImpedanceRecordingThread(QThread):
         try:
             device = pygds.GDS()
             impedances = device.GetImpedance()[0][:32]
+            self.impedance_finished.emit("Impedances read successfully")
             self.impedance_readings.emit(impedances)
-            self.impedance_finished.emit("Impedances read successfully.")
             
         except (pygds.GDSError, AssertionError):
-            self.impedance_finished.emit("Device Error: Cannot connect to gNautilus.")
+            self.impedance_finished.emit("Device Error: Cannot connect to gNautilus")
             self.impedance_finished.emit("Please close BCI2000 and g.Recorder, then try again")
         finally:
             device.Close()
