@@ -5,7 +5,7 @@ from PySide6.QtCore import (
 )
 from PySide6.QtWidgets import (
     QFileDialog, QFormLayout, QLabel, QLineEdit,
-    QMainWindow, QPushButton, QWidget
+    QPushButton, QWidget
 )
 
 class ControlsWidget(QWidget):
@@ -52,7 +52,7 @@ class ControlsWidget(QWidget):
 
     def get_subject_id(self) -> str:
         """Return current subject ID."""
-        
+
         return self.subject_id.text()
     
     def get_save_dir(self) -> str:
@@ -61,9 +61,17 @@ class ControlsWidget(QWidget):
     
     def toggle_restart_button_enabled(self, enabled: bool) -> None:
         self.service_restart_button.setEnabled(enabled)
-
+        if enabled:
+            self.service_restart_button.setStyleSheet("background-color: blue; color: white; font-size: 14px; height: 25px; margin-bottom: 5px;")
+        else:
+            self.service_restart_button.setStyleSheet("background-color: grey; color: white; font-size: 14px; height: 25px; margin-bottom: 5px;")
+            
     def toggle_impedance_button_enabled(self, enabled: bool) -> None:
         self.impedance_button.setEnabled(enabled)
+        if enabled:
+            self.impedance_button.setStyleSheet("background-color: green; color: white; font-size: 14px; height: 50px;")
+        else:
+            self.impedance_button.setStyleSheet("background-color: grey; color: white; font-size: 14px; height: 50px;")
 
     @Slot(str)
     def _select_save_directory(self) -> None:
