@@ -1,8 +1,6 @@
 from datetime import datetime
 
-from PySide6.QtWidgets import (
-    QHBoxLayout, QWidget, QTextEdit
-)
+from PySide6.QtWidgets import (QHBoxLayout, QWidget, QTextEdit)
 
 
 class StatusWidget(QWidget):
@@ -19,4 +17,8 @@ class StatusWidget(QWidget):
     def append_message(self, message):
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.status_output.append(f"[{timestamp}] {message}")
-    
+
+    def update_last_message(self, message):
+        """Remove the last line and add the updated message."""
+        self.status_output.undo()
+        self.append_message(message)

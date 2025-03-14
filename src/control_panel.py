@@ -2,6 +2,7 @@ import csv
 import os
 import re
 
+from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import (
     QHBoxLayout, QMainWindow, QWidget
 )
@@ -22,6 +23,12 @@ class ControlPanel(QMainWindow):
         self.impedance_thread = ImpedanceRecordingThread()
         self.impedance_thread.impedance_finished.connect(self._on_impedance_finished)
         self.impedance_thread.impedance_readings.connect(self._save_impedance_values)
+
+        # Create a timer for updating the loading animation
+        self.loading_timer = QTimer()
+        self.loading_timer.timeout.connect(self._update_loading_animation)
+        self.loading_dots = 0
+        self.max_dots = 4
 
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -51,13 +58,23 @@ class ControlPanel(QMainWindow):
         self.control_widget.toggle_restart_button_enabled(True)
     
     def _record_impedance(self) -> None:
-        self.status_widget.append_message("Recording impedance...")
+        self.status_widget.append_message("Measuring impedance...")
         self.control_widget.toggle_impedance_button_enabled(False)
         self.impedance_thread.start()
 
+        self.loading_dots = 0
+        self.loading_timer.start(500)  # Update every 500ms
+
     def _on_impedance_finished(self, message: str) -> None:
+        self.loading_timer.stop()
         self.status_widget.append_message(message)
         self.control_widget.toggle_impedance_button_enabled(True)
+
+    def _update_loading_animation(self):
+        """Update the loading animation while the thread is running"""    
+        self.loading_dots = (self.loading_dots % self.max_dots) + 1
+        dots = "." * self.loading_dots
+        self.status_widget.update_last_message(f"Measuring impedance{dots}")
 
     def _save_impedance_values(self, impedances: list) -> None:
         save_dir = self.control_widget.get_save_dir().strip()
